@@ -1,5 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const fs = require('fs')
+const{Parser} = require("json2csv")  // to convert json to csv, Parser class hai
 
 // curd for Blog
 
@@ -10,6 +12,21 @@ async function getAllBlogs(req, res) {
     if (!allBlogs) {
       res.status(404).json({ message: "Blogs not found!" });
     }
+
+    const jsonParser = new Parser();     // isse server se data csv mein aa rha h
+    const csv = jsonParser.parse(allBlogs);
+
+
+    fs.writeFile('./data.csv',csv,(err) => {
+      if(err){
+        console.log(err)
+      }else{
+        console.log('data saved')
+      }
+    });
+
+
+
     res
       .status(200)
       .json({ data: allBlogs, message: "Blogs fetched successfully!" });
@@ -41,12 +58,14 @@ async function createBlogs(req, res) {
 
 const updateBlog = async (req, res) => {
   const id = req.params.id;
+  const data = req?.body?.length?
+  req?.body:{coverImage:req?.file.filename};
   const updateUser = await prisma.Blog.update({
     where: {
       id: id,
     },
     data: {
-      ...req.body,
+      ...data,
     },
   });
 
